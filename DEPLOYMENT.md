@@ -1,44 +1,30 @@
 # SkillBridge AI - Deployment Guide
 
-This guide explains how to deploy SkillBridge AI to production on Vercel (frontend), Render (backend), and Supabase (database).
+This guide explains how to deploy SkillBridge AI to production on Vercel (frontend) and Render (backend). The backend uses SQLite, a self-contained file-based database — no external database service is required.
 
 ## Prerequisites
 
 - GitHub account (for connecting repositories)
 - Vercel account (vercel.com)
 - Render account (render.com)
-- Supabase account (supabase.com)
-- Google Cloud account (for Gemini API key)
+- Google Cloud account (for Gemini API key, optional)
 
-## Step 1: Database Setup (Supabase)
+## Step 1: Database Setup
 
-### Create Supabase Project
+The backend uses a local SQLite database (`backend/data/skillbridge.db`). It is initialized and seeded automatically on first startup, so there is nothing to provision externally.
 
-1. Go to https://supabase.com
-2. Click "New Project"
-3. Choose your organization
-4. Project name: `skillbridge-ai`
-5. Database password: Create a strong password
-6. Region: Choose closest to your users
-7. Click "Create new project"
+To (re)initialize or reset it manually, use the provided scripts:
 
-### Execute Schema
+```bash
+cd backend
+python -m scripts.init_db    # create tables
+python -m scripts.seed_db    # seed demo data + demo user
+python -m scripts.reset_db   # wipe and recreate (dev only)
+```
 
-1. In Supabase dashboard, go to SQL Editor
-2. Click "New Query"
-3. Copy contents of `database/schema.sql`
-4. Paste into the editor and run
-5. Copy contents of `database/seed.sql`
-6. Paste and run
+**Demo account**: `demo@example.com` / `demo123`
 
-### Get Credentials
-
-1. Go to Settings > API
-2. Copy `Project URL` → `SUPABASE_URL`
-3. Copy `anon public` key → `SUPABASE_KEY`
-4. Copy `service_role secret` → `SUPABASE_SERVICE_ROLE_KEY`
-
-Save these - you'll need them for backend deployment.
+> Note: SQLite persists across app restarts as long as the `data/` directory is writable and durable on your host. For heavy production load, consider attaching a PostgreSQL service instead.
 
 ## Step 2: Backend Deployment (Render)
 
@@ -73,11 +59,10 @@ In Render dashboard, go to Environment:
 SECRET_KEY=generate-a-random-key-here
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
-SUPABASE_URL=your-supabase-url
-SUPABASE_KEY=your-supabase-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+DATABASE_URL=sqlite:///./data/skillbridge.db
 GEMINI_API_KEY=your-gemini-api-key
-DEBUG=False
+OPENAI_API_KEY=your-openai-api-key
+DEBUG_MODE=False
 ENVIRONMENT=production
 ```
 
@@ -106,9 +91,7 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 
 1. Update `frontend/.env.production`:
    ```
-   VITE_API_BASE_URL=https://skillbridge-backend.onrender.com
-   VITE_SUPABASE_URL=your-supabase-url
-   VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+   VITE_API_URL=https://skillbridge-backend.onrender.com
    ```
 
 2. Push to GitHub (same repo as backend)
@@ -129,9 +112,7 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 1. Go to Settings > Environment Variables
 2. Add:
    ```
-   VITE_API_BASE_URL=https://skillbridge-backend.onrender.com
-   VITE_SUPABASE_URL=your-supabase-url
-   VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+   VITE_API_URL=https://skillbridge-backend.onrender.com
    ```
 
 ### Deploy
@@ -168,7 +149,7 @@ app.add_middleware(
 
 ## Monitoring & Debugging
 
-### Render Logs
+### Backend Logs
 
 1. Go to your Render service
 2. Click "Logs" tab
@@ -180,11 +161,10 @@ app.add_middleware(
 2. Check Analytics tab for performance metrics
 3. View errors in Error Tracking
 
-### Supabase Logs
+### Database Logs
 
-1. Go to Supabase dashboard
-2. Check Database > Query Performance
-3. View API activity in Logs
+- SQLite writes a single file (`backend/data/skillbridge.db`) — back it up regularly
+- Application-level queries can be observed via the backend logs
 
 ## Scaling for Production
 
@@ -199,10 +179,10 @@ app.add_middleware(
 - **Free**: Sufficient for most projects
 - **Pro** ($20/month): More analytics and support
 
-### Database (Supabase)
+### Database
 
-- **Free Tier**: Good for up to 500MB
-- **Pro** ($25/month): Up to 8GB and better support
+- **SQLite**: file-based, zero-config, free
+- For higher concurrency or multi-instance scale, migrate to PostgreSQL (e.g., Render's managed PostgreSQL) and update `DATABASE_URL`
 
 ## Custom Domain
 
@@ -222,7 +202,7 @@ app.add_middleware(
 ## Security Checklist
 
 - [ ] Change `SECRET_KEY` to a random value
-- [ ] Set `DEBUG=False` in production
+- [ ] Set `DEBUG_MODE=False` in production
 - [ ] Use HTTPS for all connections
 - [ ] Enable 2FA on all accounts
 - [ ] Rotate API keys regularly
@@ -261,23 +241,23 @@ To disable, go to Settings > Deployments and toggle Auto-Deploy.
 
 ### Database Connection Issues
 
-- Verify `SUPABASE_URL` and keys are correct
-- Test connection string in `psql` or db tool
-- Check IP whitelist in Supabase (should be open)
-- Verify schema was created successfully
+- Verify the `data/` directory is writable and persists across restarts
+- Check the DB file exists: `backend/data/skillbridge.db`
+- Re-run `python -m scripts.init_db` to recreate tables if they are missing
+- Confirm `DATABASE_URL` points at the intended SQLite file
 
 ### Slow Performance
 
 - Check Render instance type (may need upgrade)
-- Monitor Supabase connection pool
 - Enable caching in frontend
 - Use CDN for static assets
+- For heavy read/write load, move the database to PostgreSQL
 
 ## Cost Estimation (Monthly)
 
 - **Render Backend**: $7-25 (Starter+ recommended)
 - **Vercel Frontend**: $0 (free tier usually sufficient)
-- **Supabase Database**: $0-25 (free tier good for MVP)
+- **Database**: $0 (SQLite ships with the backend)
 - **Domain**: $12-15 (registrar dependent)
 
 **Minimum for MVP**: ~$20-30/month
@@ -286,8 +266,8 @@ To disable, go to Settings > Deployments and toggle Auto-Deploy.
 
 - [Vercel Docs](https://vercel.com/docs)
 - [Render Docs](https://render.com/docs)
-- [Supabase Docs](https://supabase.com/docs)
 - [FastAPI Docs](https://fastapi.tiangolo.com)
+- [SQLAlchemy Docs](https://docs.sqlalchemy.org)
 - [Vite Docs](https://vitejs.dev)
 
 ---

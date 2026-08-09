@@ -40,6 +40,16 @@ const Login = () => {
       email: 'demo@example.com',
       password: 'demo123',
     })
+    setError('')
+    setLoading(true)
+    try {
+      await login('demo@example.com', 'demo123')
+      navigate('/dashboard')
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Demo login failed. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

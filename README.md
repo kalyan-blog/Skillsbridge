@@ -18,7 +18,7 @@ Students and fresh graduates often apply for jobs without knowing whether their 
 
 ## 💡 Solution
 
-SkillBridge AI analyzes your skills and resume against 50+ career roles and generates:
+SkillBridge AI analyzes your skills and resume against 10+ career roles and generates:
 
 1. **Skill Gap Analysis** - See exactly which skills you have and which you need
 2. **Readiness Score** - Get a clear percentage of how ready you are (0-100%)
@@ -31,7 +31,7 @@ SkillBridge AI analyzes your skills and resume against 50+ career roles and gene
 ### For Job Seekers
 - 📄 Upload resume (PDF, DOCX, TXT)
 - 🤖 AI-powered skill extraction
-- 🎯 50+ supported career roles
+- 🎯 10+ supported career roles
 - 📊 Visual skill gap dashboard
 - 🗺️ Personalized learning roadmap
 - 📈 Progress tracking
@@ -64,16 +64,16 @@ SkillBridge AI analyzes your skills and resume against 50+ career roles and gene
 - **Python 3.9+** - Language
 - **Pydantic** - Data validation
 - **SQLAlchemy** - ORM
-- **Google Gemini API** - AI model
-- **JWT** - Authentication
+- **Google Gemini / OpenAI** - AI model (optional, deterministic fallback)
+- **JWT + bcrypt** - Authentication
 
 ### Database
-- **Supabase PostgreSQL** - Relational database
+- **SQLite** - Self-contained relational database (file-based)
 
 ### Deployment
 - **Frontend**: Vercel
 - **Backend**: Render
-- **Database**: Supabase Cloud
+- **Database**: SQLite (file-based, shipped with the backend)
 
 ## 📋 Supported Career Roles
 
@@ -95,8 +95,7 @@ SkillBridge AI analyzes your skills and resume against 50+ career roles and gene
 ### Prerequisites
 - Node.js 16+ and npm
 - Python 3.9+
-- Supabase account
-- Google Gemini API key
+- Google Gemini API key (optional - falls back to deterministic engine)
 
 ### Frontend Setup
 
@@ -132,10 +131,17 @@ Backend runs on: `http://localhost:8000`
 
 ### Database Setup
 
-1. Create a Supabase project at https://supabase.com
-2. Execute `database/schema.sql` in Supabase SQL editor
-3. Execute `database/seed.sql` to populate sample data
-4. Copy your Supabase URL and key to `.env` files
+The backend uses SQLite with a local database file (`backend/data/skillbridge.db`). Initialize and seed it automatically on first startup:
+
+```bash
+cd backend
+python -m scripts.init_db    # creates tables
+python -m scripts.seed_db    # seeds demo data + demo user
+```
+
+Or just start the server - it initializes and seeds automatically on startup.
+
+**Demo account**: `demo@example.com` / `demo123` (pre-seeded with skills, analysis, and roadmap)
 
 ## 📚 API Endpoints
 
@@ -155,6 +161,7 @@ Backend runs on: `http://localhost:8000`
 
 ### Analysis
 - `POST /api/analysis` - Create new analysis
+- `POST /api/analysis/what-if` - What-If readiness projection
 - `GET /api/analysis/latest` - Get latest analysis
 - `GET /api/analysis/history` - Get all analyses
 - `GET /api/analysis/{id}` - Get specific analysis
@@ -167,11 +174,16 @@ Backend runs on: `http://localhost:8000`
 ### Roadmap
 - `POST /api/roadmap/generate` - Generate roadmap
 - `GET /api/roadmap` - Get current roadmap
+- `GET /api/roadmap/items/{id}` - Get roadmap item
 - `PATCH /api/roadmap/items/{id}` - Update item status
+- `PATCH /api/roadmap/{id}/progress` - Update roadmap progress (alias)
 
 ### Dashboard
 - `GET /api/dashboard/stats` - Dashboard statistics
 - `GET /api/dashboard/readiness` - Readiness score
+
+### Progress
+- `GET /api/progress` - Progress overview (readiness history, skill progress, milestones)
 
 ## 📖 Project Structure
 
@@ -190,17 +202,15 @@ skillbridge-ai/
 ├── backend/                  # FastAPI app
 │   ├── app/
 │   │   ├── api/            # Route handlers
-│   │   ├── models/         # Database models
+│   │   ├── database/       # SQLAlchemy engine + models
 │   │   ├── schemas/        # Pydantic schemas
-│   │   ├── services/       # Business logic
-│   │   ├── database/       # DB connection
+│   │   ├── services/       # Business logic (AI + skill engine)
+│   │   ├── utils/          # Auth helpers + seed data
 │   │   ├── config.py       # Configuration
 │   │   └── main.py         # App entry point
+│   ├── scripts/            # init_db / seed_db / reset_db
+│   ├── data/               # SQLite database file
 │   └── requirements.txt
-│
-├── database/               # Database files
-│   ├── schema.sql         # Table definitions
-│   └── seed.sql           # Sample data
 │
 └── README.md
 ```
@@ -233,11 +243,10 @@ Readiness Score = Weighted Skills Match / Total Weighted Requirements × 100
 ## 🤖 AI Features
 
 ### Resume Analysis
-Extracts using Google Gemini AI:
+Extracts skills using Google Gemini AI (or OpenAI, with a deterministic keyword fallback):
 - Programming languages
 - Frameworks and tools
-- Years of experience
-- Education and certifications
+- Detected skill names with confidence levels
 - Projects and accomplishments
 
 ### Roadmap Generation
@@ -277,7 +286,13 @@ Simulates career readiness if you learn specific skills
 
 ## 🧪 Testing
 
-Run backend tests:
+Run the backend end-to-end test suite:
+```bash
+cd backend
+venv\Scripts\python.exe <path-to>/test_api.py
+```
+
+Or use pytest if you add unit tests under `backend/tests/`:
 ```bash
 cd backend
 pytest
@@ -301,9 +316,10 @@ npm run build
 # Auto-deploys on push to main
 ```
 
-### Database (Supabase Cloud)
-- Already deployed and managed
-- Set connection string in backend .env
+### Database
+- SQLite file-based, ships with the backend
+- Auto-initialized and seeded on first startup
+- No external database service required
 
 ## 🔮 Future Improvements
 

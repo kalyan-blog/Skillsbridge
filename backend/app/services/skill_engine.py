@@ -135,6 +135,45 @@ class SkillGapEngine:
             return "Beginner"
 
     @staticmethod
+    def project_readiness(
+        user_skills: List[Dict],
+        role_required_skills: List[Dict],
+        new_skill_names: List[str]
+    ) -> Tuple[int, List[Dict]]:
+        """Project readiness after learning additional skills (deterministic)."""
+        simulated = [dict(s) for s in user_skills]
+        simulated_map = {s["name"].lower(): s for s in simulated}
+
+        for name in new_skill_names:
+            required = next(
+                (r for r in role_required_skills if r["name"].lower() == name.lower()),
+                None
+            )
+            if not required:
+                continue
+            required_level = required.get("level", 3)
+            existing = simulated_map.get(name.lower())
+            if existing:
+                existing["level"] = max(existing.get("level", 0), required_level)
+            else:
+                simulated.append({"id": required.get("id"), "name": name, "level": required_level})
+
+        readiness, strong_skills, _ = SkillGapEngine.calculate_readiness_score(
+            simulated, role_required_skills
+        )
+        new_strong = []
+        for s in strong_skills:
+            was_present = any(
+                us.get("name", "").lower() == s["name"].lower() and
+                us.get("level", 0) >= s["required_level"]
+                for us in user_skills
+            )
+            if not was_present:
+                new_strong.append(s["name"])
+
+        return readiness, new_strong
+
+    @staticmethod
     def estimate_learning_time(
         gaps: List[Dict],
         weekly_hours: int = 10

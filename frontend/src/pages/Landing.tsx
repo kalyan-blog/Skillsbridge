@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronDown, Zap, TrendingUp, Compass, Check } from 'lucide-react'
+import { ChevronDown, Zap, TrendingUp, Compass } from 'lucide-react'
 import { Logo } from '../components/Logo'
 
 const Landing = () => {

@@ -145,7 +145,7 @@ SkillBridge AI is a **fully functional AI-powered skill gap analyzer** built wit
 
 - ✅ **README.md** - Complete project overview, features, tech stack, quick start
 - ✅ **QUICK_START.md** - Local setup guide, development commands, troubleshooting
-- ✅ **DEPLOYMENT.md** - Step-by-step production deployment (Vercel, Render, Supabase)
+- ✅ **DEPLOYMENT.md** - Step-by-step production deployment (Vercel, Render)
 - ✅ **ARCHITECTURE.md** - System design, data flow, algorithms, patterns
 - ✅ **FEATURES.md** - Complete feature list, roadmap, success metrics
 
@@ -175,7 +175,7 @@ python -m uvicorn app.main:app --reload
 ### Production Deployment (Step-by-step in DEPLOYMENT.md)
 - **Frontend**: Vercel (automatic from GitHub)
 - **Backend**: Render (automatic from GitHub)
-- **Database**: Supabase PostgreSQL
+- **Database**: SQLite (ships with backend)
 - **Estimated Cost**: $20-30/month (MVP tier)
 - **Setup Time**: 30 minutes
 
@@ -332,7 +332,7 @@ python -m uvicorn app.main:app --reload
    - "Personalized roadmap generation"
 
 5. **Production Ready**
-   - "Deployable to Vercel/Render/Supabase in 30 min"
+   - "Deployable to Vercel/Render in 30 min"
    - "Scales to 100K+ users"
    - "Git repo with documentation"
 
@@ -347,7 +347,7 @@ python -m uvicorn app.main:app --reload
 A: "Database indexes on user_id and skill_id for fast queries. Stateless API allows horizontal scaling. Can add Redis caching. Designed for 100K+ concurrent users."
 
 **Q: What about data privacy?**
-A: "JWT tokens for auth. Resume text encrypted in Supabase. Row-level security can be enabled. GDPR-ready with data export."
+A: "JWT tokens for auth. Passwords hashed with bcrypt. Resume files stored privately. GDPR-ready with data export."
 
 **Q: How do you validate AI accuracy?**
 A: "We have fallback deterministic algorithms. User can manually verify/adjust extracted skills. Continuous feedback loop for improvement."
@@ -395,20 +395,19 @@ A: "Existing solutions (LinkedIn, Coursera) don't analyze skill gaps against spe
 ```
 Frontend:          React 18 + TypeScript + Vite + Tailwind CSS
 Backend:           FastAPI + Python 3.9+
-Database:          PostgreSQL (Supabase)
-Auth:              JWT tokens
+Database:          SQLite (file-based)
+Auth:              JWT tokens (bcrypt hashing)
 Visualization:     Recharts
-AI:                Google Generative AI (Gemini)
-Deployment:        Vercel + Render + Supabase
+AI:                Google Generative AI (Gemini) / OpenAI
+Deployment:        Vercel + Render
 Version Control:   Git/GitHub
 ```
 
 **Why This Stack?**
 - React: Industry standard, high adoption, great ecosystem
 - FastAPI: Modern Python framework, 10x faster than Flask
-- PostgreSQL: Reliable, scalable, free tier available
-- Supabase: Firebase alternative with PostgreSQL + Auth
-- Vercel: Optimal for Next/Vite projects, free tier
+- SQLite: Zero-config, file-based, ships with the backend
+- Vercel: Optimal for Vite projects, free tier
 - Render: Simple deployment, generous free tier
 
 ---
@@ -418,7 +417,7 @@ Version Control:   Git/GitHub
 | What | Where | How |
 |------|-------|-----|
 | **Run Locally** | Frontend: port 5173, Backend: port 8000 | See QUICK_START.md |
-| **Deploy** | Vercel, Render, Supabase | See DEPLOYMENT.md |
+| **Deploy** | Vercel, Render | See DEPLOYMENT.md |
 | **Understand Architecture** | System design, data flow, algorithms | See ARCHITECTURE.md |
 | **API Reference** | Full endpoint documentation | See README.md |
 | **Features Roadmap** | What's done, what's planned | See FEATURES.md |

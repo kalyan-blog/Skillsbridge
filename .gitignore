@@ -19,6 +19,8 @@ backend/dist/
 backend/build/
 backend/*.egg-info/
 backend/.pytest_cache/
+backend/data/skillbridge.db
+backend/uploads/
 
 # IDE
 .vscode/
@@ -44,3 +46,5 @@ yarn-error.log*
 
 # Cache
 .cache/
+__pycache__/
+*.pyc

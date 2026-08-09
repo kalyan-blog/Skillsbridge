@@ -6,7 +6,7 @@ interface SkillCardProps {
   importance?: number
 }
 
-export const SkillCard: React.FC<SkillCardProps> = ({ name, level, importance }) => {
+export const SkillCard: React.FC<SkillCardProps> = ({ name, level }) => {
   return (
     <div className="card">
       <div className="flex justify-between items-center mb-2">

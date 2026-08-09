@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { LogOut, Menu } from 'lucide-react'
+import { LogOut } from 'lucide-react'
 
 interface SidebarProps {
   isOpen?: boolean

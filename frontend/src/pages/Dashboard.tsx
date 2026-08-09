@@ -1,39 +1,89 @@
-import React, { useState } from 'react'
-import { Sidebar } from '../components/Sidebar'
-import { ReadinessScore } from '../components/ReadinessScore'
-import { SkillsChart } from '../components/SkillsChart'
-import { SkillCard } from '../components/SkillCard'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { TrendingUp, Zap, Target, Award } from 'lucide-react'
+import { dashboardAPI, analysisAPI } from '../services/api'
+import { useAuth } from '../context/AuthContext'
 
 export default function Dashboard() {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { user } = useAuth()
 
-  // Mock data - in production, fetch from API
-  const dashboardData = {
-    firstName: 'Alex',
+  // Default demo data while loading
+  const [dashboardData, setDashboardData] = useState({
+    firstName: user?.full_name?.split(' ')[0] || 'Alex',
     targetRole: 'Data Scientist',
-    readinessScore: 78,
-    readinessLabel: 'Job Ready',
+    readinessScore: 0,
+    readinessLabel: 'Getting Started',
     totalSkills: 18,
-    matchedSkills: 12,
-    learningProgress: 64,
+    matchedSkills: 0,
+    learningProgress: 0,
     estimatedWeeks: 12,
-  }
+  })
 
-  const strongSkills = [
+  const [strongSkills, setStrongSkills] = useState([
     { name: 'Python', level: 90, icon: '🐍' },
     { name: 'SQL', level: 82, icon: '💾' },
     { name: 'Pandas', level: 85, icon: '📊' },
     { name: 'Git', level: 75, icon: '🔧' },
-  ]
+  ])
 
-  const skillsToImprove = [
+  const [skillsToImprove, setSkillsToImprove] = useState([
     { name: 'Machine Learning', level: 40, priority: 'critical' },
     { name: 'Statistics', level: 45, priority: 'critical' },
     { name: 'Power BI', level: 25, priority: 'high' },
     { name: 'Deep Learning', level: 20, priority: 'high' },
-  ]
+  ])
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [statsRes, analysisRes] = await Promise.allSettled([
+          dashboardAPI.getStats(),
+          analysisAPI.getLatest(),
+        ])
+
+        if (statsRes.status === 'fulfilled') {
+          const s = statsRes.value.data
+          setDashboardData((prev) => ({
+            ...prev,
+            firstName: user?.full_name?.split(' ')[0] || prev.firstName,
+            targetRole: s.target_role || prev.targetRole,
+            readinessScore: s.readiness_score,
+            readinessLabel: s.readiness_label,
+            matchedSkills: s.skills_matched,
+            totalSkills: s.total_skills || prev.totalSkills,
+            learningProgress: s.learning_progress,
+            estimatedWeeks: s.estimated_completion_weeks || prev.estimatedWeeks,
+          }))
+        }
+
+        if (analysisRes.status === 'fulfilled') {
+          const a = analysisRes.value.data
+          if (a?.strong_skills?.length) {
+            const icons = ['🐍', '💾', '📊', '🔧', '⚙️', '📈', '🧠', '☁️']
+            setStrongSkills(
+              a.strong_skills.slice(0, 4).map((s: any, i: number) => ({
+                name: s.name,
+                level: s.proficiency ?? s.current_level * 25,
+                icon: icons[i % icons.length],
+              }))
+            )
+          }
+          if (a?.missing_skills?.length) {
+            setSkillsToImprove(
+              a.missing_skills.slice(0, 4).map((g: any) => ({
+                name: g.skill_name,
+                level: 100 - g.gap_percentage,
+                priority: g.priority,
+              }))
+            )
+          }
+        }
+      } catch (err) {
+        // Keep demo fallback data if the API is unavailable
+      }
+    }
+    load()
+  }, [user])
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {

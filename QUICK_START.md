@@ -274,52 +274,36 @@ app.include_router(example.router)
 
 3. Test: `curl http://localhost:8000/api/example/`
 
-## Database Setup (Supabase)
+## Database Setup (SQLite)
 
-For local development with mock data, you don't need a real database. However, to connect to Supabase:
+The backend uses SQLite — a self-contained, file-based database. There is nothing to provision externally.
 
-### Create Supabase Project
+The database file (`backend/data/skillbridge.db`) is created and seeded automatically on first server startup.
 
-1. Go to https://supabase.com
-2. Sign up / Sign in
-3. Create new project
-4. Choose database password and region
-5. Wait 2-3 minutes for setup
+### Initialize Manually (Optional)
 
-### Get Credentials
-
-Go to **Settings > API**:
-- Copy `Project URL` → `SUPABASE_URL`
-- Copy `anon public` key → `SUPABASE_KEY`
-
-### Create .env File
-
-Create `backend/.env`:
-```
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your-anon-key
-SECRET_KEY=your-secret-key-generate-one
-GEMINI_API_KEY=your-gemini-key (optional)
+```bash
+cd backend
+python -m scripts.init_db    # create tables
+python -m scripts.seed_db    # seed demo data + demo user
 ```
 
-**Note**: Never commit .env files! Use .env.example template.
+The seed includes a **demo account**: `demo@example.com` / `demo123`
 
-### Load Schema
+### Reset the Database (Dev Only)
 
-In Supabase dashboard, go to SQL Editor and run:
-1. Copy contents of `database/schema.sql`
-2. Paste and execute
-3. Copy contents of `database/seed.sql`
-4. Paste and execute
+```bash
+python -m scripts.reset_db
+```
+
+**Note**: Never commit the `.db` file or `.env` files! Use `.env.example` templates.
 
 ## Environment Variables
 
 ### Frontend (.env)
 
 ```
-VITE_API_BASE_URL=http://localhost:8000
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
+VITE_API_URL=http://localhost:8000
 ```
 
 See: `frontend/.env.example`
@@ -330,10 +314,10 @@ See: `frontend/.env.example`
 SECRET_KEY=generate-a-random-key
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your-anon-key
-GEMINI_API_KEY=your-gemini-key
-DEBUG=True
+DATABASE_URL=sqlite:///./data/skillbridge.db
+GEMINI_API_KEY=your-gemini-key (optional)
+OPENAI_API_KEY=your-openai-key (optional)
+DEBUG_MODE=False
 ENVIRONMENT=development
 ```
 
@@ -371,7 +355,7 @@ python -m uvicorn app.main:app --reload
 ### Can't connect frontend to backend
 
 1. Ensure backend is running on `http://localhost:8000`
-2. Check `frontend/.env` has `VITE_API_BASE_URL=http://localhost:8000`
+2. Check `frontend/.env` has `VITE_API_URL=http://localhost:8000`
 3. Open DevTools (F12) → Network tab
 4. Try to login
 5. See what URL the API request is going to
@@ -404,7 +388,7 @@ npm run dev -- --port 5174
 python -m uvicorn app.main:app --reload --port 8001
 ```
 
-Then update `VITE_API_BASE_URL` in frontend .env.
+Then update `VITE_API_URL` in frontend .env.
 
 ## Git Workflow
 
@@ -475,7 +459,7 @@ git merge feat        # Merge branch
 ### Tips
 
 - **Pre-test** before presenting (both frontend and backend running)
-- **Use demo mode** if backend isn't available
+- **Use demo mode** (demo@example.com / demo123) for a fast presentation
 - **Have laptop plugged in** (don't rely on battery)
 - **Show mobile responsiveness** - many companies care
 - **Explain the problem** - why SkillBridge AI is needed
@@ -500,8 +484,8 @@ Our platform shows:
 - AI-generated learning paths with capstone projects
 - Progress tracking to stay motivated
 
-We've built a full-stack application ready for 100K+ users with React, 
-FastAPI, PostgreSQL, and Google AI.
+We've built a full-stack application ready for scale with React, 
+FastAPI, and Google AI.
 
 Here's the demo..."
 ```

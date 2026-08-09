@@ -1,12 +1,25 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from app.api import auth, users, resume, analysis, careers, roadmap, dashboard
+import sys
+
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
+from .database import init_db, SessionLocal
+from .utils import initialize_database
+from .api import auth, users, resume, analysis, careers, roadmap, dashboard, progress
 
 app = FastAPI(
     title="SkillBridge AI API",
-    description="AI-powered skill gap analysis and career roadmap platform",
-    version="1.0.0"
+    description=(
+        "AI-powered skill gap analysis and personalized career roadmap platform. "
+        "Built with FastAPI + SQLAlchemy + SQLite."
+    ),
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
 )
 
 # CORS middleware
@@ -18,25 +31,41 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Trusted host middleware
-app.add_middleware(
-    TrustedHostMiddleware,
-    allowed_hosts=["localhost", "127.0.0.1", "*.vercel.app", "*.render.com"]
-)
 
-# Health check endpoint
+@app.on_event("startup")
+def startup():
+    """Initialize database, create tables and seed data on startup."""
+    init_db()
+
+    db = SessionLocal()
+    try:
+        initialize_database(db)
+        print("✓ Database initialized successfully (backend/data/skillbridge.db)")
+    finally:
+        db.close()
+
+
 @app.get("/health")
 async def health_check():
     return {"status": "ok", "message": "SkillBridge AI API is running"}
 
-# Include routers
-app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
-app.include_router(users.router, prefix="/api/users", tags=["users"])
-app.include_router(resume.router, prefix="/api/resume", tags=["resume"])
-app.include_router(analysis.router, prefix="/api/analysis", tags=["analysis"])
-app.include_router(careers.router, prefix="/api/careers", tags=["careers"])
-app.include_router(roadmap.router, prefix="/api/roadmap", tags=["roadmap"])
-app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
+
+# Authentication
+app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+# Users
+app.include_router(users.router, prefix="/api/users", tags=["Users"])
+# Resume
+app.include_router(resume.router, prefix="/api/resume", tags=["Resume"])
+# Analysis
+app.include_router(analysis.router, prefix="/api/analysis", tags=["Analysis"])
+# Careers
+app.include_router(careers.router, prefix="/api/careers", tags=["Careers"])
+# Roadmap
+app.include_router(roadmap.router, prefix="/api/roadmap", tags=["Roadmap"])
+# Dashboard
+app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
+# Progress
+app.include_router(progress.router, prefix="/api/progress", tags=["Progress"])
 
 if __name__ == "__main__":
     import uvicorn

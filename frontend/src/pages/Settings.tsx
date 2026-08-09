@@ -1,9 +1,18 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Sidebar } from '../components/Sidebar'
 import { Bell, Lock, Eye, Save } from 'lucide-react'
 
+type SettingsState = {
+  emailNotifications: boolean
+  pushNotifications: boolean
+  weeklyDigest: boolean
+  learningReminders: boolean
+  darkMode: boolean
+  twoFactor: boolean
+}
+
 export default function Settings() {
-  const [settings, setSettings] = useState({
+  const [settings, setSettings] = useState<SettingsState>({
     emailNotifications: true,
     pushNotifications: false,
     weeklyDigest: true,
@@ -12,7 +21,7 @@ export default function Settings() {
     twoFactor: false,
   })
 
-  const handleToggle = (key: string) => {
+  const handleToggle = (key: keyof SettingsState) => {
     setSettings((prev) => ({ ...prev, [key]: !prev[key] }))
   }
 

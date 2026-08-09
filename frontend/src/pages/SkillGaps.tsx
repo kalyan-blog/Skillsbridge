@@ -1,26 +1,26 @@
-import React from 'react'
+import { useState, useEffect } from 'react'
 import { Sidebar } from '../components/Sidebar'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts'
+import { analysisAPI } from '../services/api'
 
 export default function SkillGaps() {
-  // Mock data
-  const skillGaps = [
+  const [skillGaps, setSkillGaps] = useState([
     { skill: 'Machine Learning', current: 2, required: 4, gap: 50 },
     { skill: 'Deep Learning', current: 1, required: 3, gap: 67 },
     { skill: 'Statistics', current: 2, required: 4, gap: 50 },
     { skill: 'Power BI', current: 1, required: 3, gap: 67 },
-  ]
+  ])
 
-  const radarData = [
+  const [radarData, setRadarData] = useState([
     { category: 'Python', current: 90, required: 100 },
     { category: 'SQL', current: 82, required: 100 },
     { category: 'Statistics', current: 45, required: 90 },
     { category: 'ML', current: 40, required: 85 },
     { category: 'Visualization', current: 50, required: 80 },
     { category: 'Git', current: 75, required: 85 },
-  ]
+  ])
 
-  const criticalGaps = [
+  const [criticalGaps, setCriticalGaps] = useState([
     {
       skill: 'Machine Learning',
       current: 'Beginner',
@@ -42,7 +42,78 @@ export default function SkillGaps() {
       priority: 'High',
       timeToLearn: '6 weeks',
     },
-  ]
+  ])
+
+  const [stats, setStats] = useState({ total: 18, matched: 12, gaps: 6 })
+
+  const levelLabels: Record<number, string> = {
+    0: 'None',
+    1: 'Beginner',
+    2: 'Basic',
+    3: 'Intermediate',
+    4: 'Advanced',
+    5: 'Expert',
+  }
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await analysisAPI.getLatest()
+        const a = res.data
+
+        setStats({
+          total: a.total_skills,
+          matched: a.matched_skills,
+          gaps: a.missing_skills.length,
+        })
+
+        if (a.missing_skills?.length) {
+          const barData = a.missing_skills.slice(0, 8).map((g: any) => ({
+            skill: g.skill_name,
+            current: g.current_level,
+            required: g.required_level,
+            gap: g.gap_percentage,
+          }))
+          setSkillGaps(barData)
+
+          const priorityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
+          const sorted = [...a.missing_skills].sort(
+            (x: any, y: any) => (priorityOrder[x.priority] ?? 4) - (priorityOrder[y.priority] ?? 4)
+          )
+          setCriticalGaps(
+            sorted.slice(0, 5).map((g: any) => ({
+              skill: g.skill_name,
+              current: levelLabels[g.current_level] ?? String(g.current_level),
+              required: levelLabels[g.required_level] ?? String(g.required_level),
+              priority: g.priority.charAt(0).toUpperCase() + g.priority.slice(1),
+              timeToLearn: `${Math.max(1, Math.round(g.gap_percentage / 12))} weeks`,
+            }))
+          )
+
+          const radar: any[] = []
+          const maxItems = 6
+          const slice = [
+            ...(a.missing_skills || []),
+            ...(a.strong_skills || []),
+          ].slice(0, maxItems)
+          for (const item of slice as any[]) {
+            const name = item.skill_name ?? item.name ?? 'Skill'
+            const current = item.current_level ?? Math.round((item.proficiency ?? 0) / 25)
+            const required = item.required_level ?? Math.round(((item.proficiency ?? 50) / 100) * 4)
+            radar.push({
+              category: name.length > 10 ? name.slice(0, 9) + '…' : name,
+              current: Math.min(4, current) * 25,
+              required: Math.min(4, required) * 25,
+            })
+          }
+          if (radar.length) setRadarData(radar)
+        }
+      } catch (err) {
+        // Keep demo fallback data
+      }
+    }
+    load()
+  }, [])
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
@@ -54,7 +125,7 @@ export default function SkillGaps() {
           <div className="mb-8">
             <h1 className="text-4xl font-bold mb-2">📊 Skill Gap Analysis</h1>
             <p className="text-slate-600">
-              Detailed breakdown of skills you have vs. skills needed for Data Scientist role
+              Detailed breakdown of skills you have vs. skills needed for your target role
             </p>
           </div>
 
@@ -62,15 +133,15 @@ export default function SkillGaps() {
           <div className="grid md:grid-cols-3 gap-4 mb-8">
             <div className="card">
               <p className="text-slate-600 text-sm">Total Required Skills</p>
-              <p className="text-3xl font-bold mt-1">18</p>
+              <p className="text-3xl font-bold mt-1">{stats.total}</p>
             </div>
             <div className="card">
               <p className="text-slate-600 text-sm">Skills Matched</p>
-              <p className="text-3xl font-bold mt-1 text-green-600">12</p>
+              <p className="text-3xl font-bold mt-1 text-green-600">{stats.matched}</p>
             </div>
             <div className="card">
               <p className="text-slate-600 text-sm">Skill Gaps</p>
-              <p className="text-3xl font-bold mt-1 text-orange-600">6</p>
+              <p className="text-3xl font-bold mt-1 text-orange-600">{stats.gaps}</p>
             </div>
           </div>
 
@@ -115,7 +186,9 @@ export default function SkillGaps() {
                           className={`px-3 py-1 rounded-full text-xs font-semibold ${
                             gap.priority === 'Critical'
                               ? 'bg-red-100 text-red-700'
-                              : 'bg-orange-100 text-orange-700'
+                              : gap.priority === 'High'
+                              ? 'bg-orange-100 text-orange-700'
+                              : 'bg-yellow-100 text-yellow-700'
                           }`}
                         >
                           {gap.priority}

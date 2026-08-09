@@ -81,7 +81,7 @@ SkillBridge AI is a full-stack AI-powered skill gap analyzer that helps students
 └─────────────────────────────────────────────────────────────────┘
                               ↓ HTTPS
 ┌─────────────────────────────────────────────────────────────────┐
-│                Database (Supabase PostgreSQL)                     │
+│                Database (SQLite - file-based)                     │
 │                   Database Layer                                  │
 │                                                                   │
 │  users │ skills │ career_roles │ user_skills │ skill_gaps       │
@@ -93,8 +93,8 @@ SkillBridge AI is a full-stack AI-powered skill gap analyzer that helps students
 │            External Services (Third-Party APIs)                   │
 │                                                                   │
 │  ┌──────────────────────┐      ┌──────────────────────┐          │
-│  │   Google Gemini      │      │   Supabase Auth      │          │
-│  │ (AI Skill Analysis)  │      │  (Optional - JWT)    │          │
+│  │   Google Gemini      │      │      OpenAI          │          │
+│  │ (AI Skill Analysis)  │      │  (Optional fallback) │          │
 │  └──────────────────────┘      └──────────────────────┘          │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -193,10 +193,10 @@ Is user logged in? (check localStorage + token)
 - **Framework**: FastAPI (Python 3.9+)
 - **ORM**: SQLAlchemy
 - **Validation**: Pydantic
-- **Authentication**: JWT (PyJWT)
-- **AI**: Google Generative AI (Gemini)
+- **Authentication**: JWT (python-jose) + bcrypt
+- **AI**: Google Generative AI (Gemini) / OpenAI (with deterministic fallback)
 - **Resume Parsing**: PyPDF2, python-docx
-- **Database**: PostgreSQL (Supabase)
+- **Database**: SQLite (file-based) via SQLAlchemy
 
 ### API Routes
 
@@ -555,9 +555,9 @@ Resume service adapts multiple formats to unified output.
 - Input validation with Pydantic
 
 ### Database Security
-- Passwords never stored in plaintext
-- Supabase handles encryption at rest
-- Row-level security policies (TODO)
+- Passwords never stored in plaintext (bcrypt hashing)
+- SQLite file permissions restricted to the app user
+- Input validation with Pydantic on all endpoints
 - Audit logging for sensitive operations (TODO)
 
 ## Performance Optimizations
@@ -601,21 +601,21 @@ Resume service adapts multiple formats to unified output.
 ```
 Local frontend: http://localhost:5173
 Local backend: http://localhost:8000
-Local database: PostgreSQL in Docker (or Supabase dev)
+Local database: SQLite (backend/data/skillbridge.db)
 ```
 
 ### Staging
 ```
 Frontend: Vercel Preview Deployment
 Backend: Render Preview Deployment
-Database: Supabase Staging
+Database: SQLite (persistent disk on Render)
 ```
 
 ### Production
 ```
 Frontend: Vercel Production (skillbridge-ai.vercel.app)
 Backend: Render Production (skillbridge-backend.onrender.com)
-Database: Supabase Production
+Database: SQLite (or managed PostgreSQL for scale)
 DNS: Custom domain (skillbridge.ai)
 ```
 
@@ -639,7 +639,7 @@ GitHub Actions
 ### Logging
 - Backend: Python logging to stdout (Render captures)
 - Frontend: Browser console + Sentry (TODO)
-- Database: Supabase logs
+- Database: SQLite file + application logs
 
 ### Metrics (TODO)
 - Request latency

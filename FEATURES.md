@@ -339,9 +339,9 @@ Students waste 40% of learning time on irrelevant skills. SkillBridge AI analyze
 **Tech Stack**:
 - Frontend: React 18 + TypeScript + Tailwind
 - Backend: FastAPI + Python
-- Database: PostgreSQL (Supabase)
-- AI: Google Generative AI (Gemini)
-- Deployment: Vercel + Render + Supabase
+- Database: SQLite (file-based)
+- AI: Google Generative AI (Gemini) / OpenAI
+- Deployment: Vercel + Render
 
 **Scalability**:
 Designed for 100K+ concurrent users with:

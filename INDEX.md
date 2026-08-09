@@ -365,9 +365,9 @@ python -m uvicorn app.main:app --reload
 ### For Developers
 - ✅ Clean architecture (services, models, schemas)
 - ✅ Type-safe with TypeScript + Pydantic
-- ✅ Modern stack (React 18, FastAPI, PostgreSQL)
+- ✅ Modern stack (React 18, FastAPI, SQLite)
 - ✅ Comprehensive documentation
-- ✅ Ready to deploy (Vercel/Render/Supabase)
+- ✅ Ready to deploy (Vercel/Render)
 - ✅ Git history with semantic commits
 
 ### For Judges
@@ -415,7 +415,7 @@ See [HACKATHON_READY.md](HACKATHON_READY.md) for full presentation guide!
 - **GitHub**: [skillbridge-ai](https://github.com/YOUR_USERNAME/skillbridge-ai)
 - **Frontend Demo**: http://localhost:5173 (local)
 - **API Docs**: http://localhost:8000/docs (local FastAPI Swagger)
-- **Database**: Supabase PostgreSQL (see DEPLOYMENT.md)
+- **Database**: SQLite (ships with backend, see DEPLOYMENT.md)
 
 ---
 

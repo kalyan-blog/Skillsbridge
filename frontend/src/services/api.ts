@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 const api = axios.create({
   baseURL: `${API_BASE_URL}/api`,
@@ -48,7 +48,10 @@ export const authAPI = {
 export const userAPI = {
   getProfile: () => api.get('/users/me'),
   updateProfile: (data: any) => api.put('/users/me', data),
-  updateSkills: (skills: any[]) => api.post('/users/me/skills', { skills }),
+  getSkills: () => api.get('/users/me/skills'),
+  addSkill: (skill_name: string, current_level: number, proficiency?: number) =>
+    api.post('/users/me/skills', { skill_name, current_level, proficiency }),
+  deleteSkill: (skillId: string) => api.delete(`/users/me/skills/${skillId}`),
 }
 
 // Resume endpoints
@@ -60,15 +63,17 @@ export const resumeAPI = {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
   },
-  analyze: (resumeId: string) => api.post(`/resume/${resumeId}/analyze`, {}),
+  analyze: () => api.post('/resume/analyze', {}),
 }
 
 // Analysis endpoints
 export const analysisAPI = {
-  create: (data: any) => api.post('/analysis', data),
+  create: (target_role: string) => api.post('/analysis/create', { target_role }),
   getLatest: () => api.get('/analysis/latest'),
   getHistory: () => api.get('/analysis/history'),
   getById: (id: string) => api.get(`/analysis/${id}`),
+  whatIf: (target_role: string, skills: string[]) =>
+    api.post('/analysis/what-if', { target_role, skills }),
 }
 
 // Career endpoints
@@ -82,14 +87,20 @@ export const careerAPI = {
 export const roadmapAPI = {
   generate: (data: any) => api.post('/roadmap/generate', data),
   get: () => api.get('/roadmap'),
-  updateItem: (itemId: string, status: string) =>
-    api.patch(`/roadmap/items/${itemId}`, { status }),
+  getById: (id: string) => api.get(`/roadmap/${id}`),
+  updateItem: (roadmapId: string, itemId: string, status: string) =>
+    api.patch(`/roadmap/${roadmapId}/items/${itemId}`, { status }),
 }
 
 // Dashboard endpoints
 export const dashboardAPI = {
   getStats: () => api.get('/dashboard/stats'),
   getReadinessScore: () => api.get('/dashboard/readiness'),
+}
+
+// Progress endpoint
+export const progressAPI = {
+  get: () => api.get('/progress'),
 }
 
 export default api
