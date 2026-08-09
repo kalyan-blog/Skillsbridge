@@ -356,3 +356,5 @@ For issues and questions:
 **Made with ❤️ by SkillBridge AI Team**
 
 **Tagline**: *Bridge the gap between your skills and your dream career.*
+#   S k i l l s b r i d g e  
+ 
